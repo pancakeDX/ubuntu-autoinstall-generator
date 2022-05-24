@@ -1,0 +1,40 @@
+#cloud-config
+autoinstall:
+  version: 1
+  apt:
+      preserve_sources_list: false
+      primary:
+          - arches: [i386, amd64]
+            uri: "http://tw.archive.ubuntu.com/ubuntu"
+      geoip: true
+      sources:
+        ansible-ppa:
+            source: ppa:ansible/ansible
+        yq-ppa:
+            source: ppa:rmescandon/yq
+  identity:
+    hostname: ubuntu-server
+    password: "$6$exDY1mhS4KUYCE/2$zmn9ToZwTKLhCw.b4/b.ZRTIZM30JZ4QrOQ2aOXJ8yk96xpcCof0kxKwuX1kqLG/ygbJ1f8wxED22bTL4F46P0"
+    username: ubuntu
+  keyboard:
+    layout: us
+    toggle: null
+    variant: ''
+  locale: en_US.UTF-8
+  packages:
+    - ipmitool
+    - libnss3-tools
+    - bind9
+  ssh:
+    allow-pw: true
+    authorized-keys: []
+    install-server: true
+  interactive-sections:
+    - storage
+  late-commands:
+      # - curtin in-target --target=/target -- bash -c 'cd /home/ubuntu; dpkg -i *.deb'
+      - curtin in-target --target=/target -- bash -c 'cd /home/ubuntu; dpkg --unpack *.deb; apt-get install --no-download -yf'
+      - curtin in-target --target=/target -- apt-get --purge -y --quiet=2 autoremove
+      - curtin in-target --target=/target -- apt-get clean
+      - curtin in-target --target=/target -- sed -i '/%sudo/c %sudo ALL=(ALL:ALL) NOPASSWD:ALL' /etc/sudoers
+      - curtin in-target --target=/target -- sed -i 's/1/0/' /etc/apt/apt.conf.d/20auto-upgrades
